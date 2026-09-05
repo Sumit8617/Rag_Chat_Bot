@@ -1,0 +1,11 @@
+from pydantic import BaseModel, Field
+
+
+class Citation(BaseModel):
+    document: str
+    section: str
+
+
+class AnswerResponse(BaseModel):
+    answer: str
+    citations: list[Citation] = Field(default_factory=list)

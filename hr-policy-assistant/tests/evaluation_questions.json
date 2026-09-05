@@ -1,0 +1,53 @@
+[
+  {
+    "question": "How many casual leave days can I carry forward?",
+    "answerable": true,
+    "expected_sections": [
+      "4.1 Casual leave carry-forward"
+    ]
+  },
+  {
+    "question": "Can sick leave be carried to the next year?",
+    "answerable": true,
+    "expected_sections": [
+      "2.2 Sick leave (SL)",
+      "4.3 Sick leave"
+    ]
+  },
+  {
+    "question": "How many privilege leave days can I carry forward?",
+    "answerable": true,
+    "expected_sections": [
+      "4.2 Privilege leave carry-forward"
+    ]
+  },
+  {
+    "question": "When does carried-forward casual leave expire?",
+    "answerable": true,
+    "expected_sections": [
+      "4.1 Casual leave carry-forward"
+    ]
+  },
+  {
+    "question": "What does section 4.1 say about CL?",
+    "answerable": true,
+    "expected_sections": [
+      "4.1 Casual leave carry-forward"
+    ]
+  },
+  {
+    "question": "Can I expense a personal home gym?",
+    "answerable": false,
+    "expected_sections": []
+  },
+  {
+    "question": "Does the company provide free gym membership?",
+    "answerable": false,
+    "expected_sections": []
+  },
+  {
+    "question": "What is the company's maternity leave policy?",
+    "answerable": false,
+    "expected_sections": []
+  }
+]
