@@ -114,3 +114,22 @@ class VectorStore:
             )
 
         return chunks
+
+
+    def delete_by_document(self, document_name: str):
+        """
+        Delete all previously indexed chunks belonging to a
+        given document name.
+
+        Called before re-indexing so a re-uploaded or updated
+        policy replaces its old chunks instead of leaving stale
+        ones (with outdated section boundaries) alongside the
+        new ones.
+        """
+
+        if not document_name:
+            return
+
+        self.collection.delete(
+            where={"document": document_name}
+        )

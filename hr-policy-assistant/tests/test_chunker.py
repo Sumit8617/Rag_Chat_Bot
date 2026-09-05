@@ -2,13 +2,13 @@ from app.ingestion.loader import load_document
 from app.ingestion.chunker import chunk_document
 
 
-file_path = "data/policies/leave-policy.md"
+file_path = "data/policies/benefits-policy.md"
 
 text = load_document(file_path)
 
 chunks = chunk_document(
     text=text,
-    document_name="leave-policy.md"
+    document_name="benefits-policy.md"
 )
 
 print(f"\nTotal chunks: {len(chunks)}\n")

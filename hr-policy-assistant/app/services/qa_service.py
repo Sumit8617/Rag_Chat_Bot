@@ -1,3 +1,4 @@
+from app.config import settings
 from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.grounding import GroundingChecker
 from app.generation.generator import PolicyGenerator
@@ -32,7 +33,7 @@ class QAService:
 
         results = self.retriever.retrieve(
             question,
-            top_k=5
+            top_k=settings.top_k
         )
 
         # -----------------------------------------
