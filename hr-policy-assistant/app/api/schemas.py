@@ -11,11 +11,6 @@ class AskRequest(BaseModel):
     )
 
 
-class Citation(BaseModel):
-    document: str
-    section: str
-
-
 class AskResponse(BaseModel):
     answer: str
     citations: list[Citation]

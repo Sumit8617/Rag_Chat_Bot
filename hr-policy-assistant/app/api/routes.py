@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
 
@@ -11,8 +12,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-qa_service = QAService()
-ingestion_service = IngestionService()
+@lru_cache(maxsize=1)
+def get_qa_service() -> QAService:
+    return QAService()
+
+
+@lru_cache(maxsize=1)
+def get_ingestion_service() -> IngestionService:
+    return IngestionService()
 
 
 @router.get("/health")
@@ -24,6 +31,19 @@ def health_check():
 
 @router.post("/documents", response_model=UploadResponse)
 def upload_document(file: UploadFile = File(...)):
+
+    try:
+        ingestion_service = get_ingestion_service()
+    except Exception as e:
+        logger.exception("Ingestion service unavailable: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Document ingestion is not available right now. "
+                "Check server configuration (e.g. the embedding "
+                "model must be downloaded/cached first)."
+            )
+        )
 
     try:
         file_bytes = file.file.read()
@@ -52,6 +72,20 @@ def upload_document(file: UploadFile = File(...)):
 
 @router.post("/ask", response_model=AskResponse)
 def ask_question(request: AskRequest):
+
+    try:
+        qa_service = get_qa_service()
+    except Exception as e:
+        logger.exception("QA service unavailable: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "The question-answering service is not available "
+                "right now. Check server configuration (e.g. "
+                "GEMINI_API_KEY must be set and the embedding "
+                "model must be downloaded/cached)."
+            )
+        )
 
     try:
         result = qa_service.ask(request.question)

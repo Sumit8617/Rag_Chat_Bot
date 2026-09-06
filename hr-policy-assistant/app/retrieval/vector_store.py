@@ -10,8 +10,15 @@ class VectorStore:
             path=settings.chroma_path
         )
 
+        # EmbeddingService normalizes vectors specifically for cosine
+        # similarity. Chroma's default HNSW space is squared L2, which
+        # for unit vectors is on a 0-4 scale (2 - 2*cos_sim) instead of
+        # cosine distance's 0-2 scale (1 - cos_sim). GroundingChecker's
+        # max_distance threshold assumes the cosine scale, so the space
+        # must be set explicitly or correct top matches get refused.
         self.collection = self.client.get_or_create_collection(
-            name="hr_policies"
+            name="hr_policies",
+            metadata={"hnsw:space": "cosine"}
         )
 
     def add_chunks(
