@@ -15,9 +15,6 @@ class QAService:
 
     def ask(self, question: str) -> dict:
 
-        # -----------------------------------------
-        # 1. Validate question
-        # -----------------------------------------
 
         if not question or not question.strip():
             return {
@@ -27,18 +24,12 @@ class QAService:
 
         question = question.strip()
 
-        # -----------------------------------------
-        # 2. Retrieve relevant policy chunks
-        # -----------------------------------------
 
         results = self.retriever.retrieve(
             question,
             top_k=settings.top_k
         )
 
-        # -----------------------------------------
-        # 3. Grounding / relevance check
-        # -----------------------------------------
 
         grounded = self.grounding_checker.is_grounded(
             results
@@ -54,27 +45,18 @@ class QAService:
                 "citations": []
             }
 
-        # -----------------------------------------
-        # 4. Generate answer
-        # -----------------------------------------
 
         generated = self.generator.generate(
             question,
             results
         )
 
-        # -----------------------------------------
-        # 5. Validate citations
-        # -----------------------------------------
 
         citations = self.citation_validator.validate(
             [citation.model_dump() for citation in generated.citations],
             results
         )
 
-        # -----------------------------------------
-        # 6. Refuse if no valid citations
-        # -----------------------------------------
 
         if not citations:
             return {
@@ -86,9 +68,6 @@ class QAService:
                 "citations": []
             }
 
-        # -----------------------------------------
-        # 7. Final structured response
-        # -----------------------------------------
 
         return {
             "answer": generated.answer.strip(),

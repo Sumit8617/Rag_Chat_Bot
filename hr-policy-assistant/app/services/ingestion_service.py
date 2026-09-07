@@ -15,11 +15,7 @@ class IngestionService:
         UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     def ingest_upload(self, filename: str, file_bytes: bytes) -> dict:
-        """
-        Save an uploaded policy file to disk, chunk it, and
-        index it. Re-uploading a file with the same name
-        replaces its previously indexed chunks.
-        """
+        
 
         if not filename:
             raise ValueError("Uploaded file has no filename.")

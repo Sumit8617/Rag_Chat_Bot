@@ -24,6 +24,26 @@ def get_ingestion_service():
     return IngestionService()
 
 
+@st.cache_resource
+def ensure_sample_policies_seeded():
+    """
+    Runs once per container lifecycle. Safe to fail silently here --
+    if the embedding model isn't available yet, the same error will
+    surface (with a clear message) the first time a question is asked
+    or a document is uploaded, via the existing try/except blocks
+    below.
+    """
+    try:
+        from app.services.startup import seed_sample_policies_if_empty
+        return seed_sample_policies_if_empty()
+    except Exception as exc:
+        logger.warning("Startup seeding skipped: %s", exc)
+        return None
+
+
+ensure_sample_policies_seeded()
+
+
 st.title("🤖 HR Policy Assistant")
 
 st.write(
@@ -71,10 +91,6 @@ with st.sidebar:
 
             try:
 
-                # Lazy construction, same reasoning as get_qa_service():
-                # if GEMINI_API_KEY is unset or the embedding model
-                # isn't cached, this raises here -- caught below --
-                # rather than crashing the whole page on load.
                 ingestion_service = get_ingestion_service()
 
                 result = ingestion_service.ingest_upload(
@@ -90,8 +106,6 @@ with st.sidebar:
                 )
 
             except ValueError as exc:
-                # Bad extension, empty file, unreadable content, etc.
-                # -- a clean, expected validation failure, not a crash.
                 st.error(f"Could not index document: {exc}")
 
             except Exception as exc:
@@ -171,11 +185,6 @@ if question:
 
             try:
 
-                # Service is constructed lazily, on first use, not
-                # at module import time. If GEMINI_API_KEY is unset
-                # or the embedding model isn't cached, this raises
-                # here -- caught below -- instead of crashing the
-                # whole page before any UI has a chance to render.
                 qa_service = get_qa_service()
 
                 result = qa_service.ask(question)
@@ -232,9 +241,6 @@ if question:
                 "No policy sources were found."
             )
 
-    # --------------------------------------------------------
-    # Save Assistant Message
-    # --------------------------------------------------------
 
     st.session_state.messages.append(
         {

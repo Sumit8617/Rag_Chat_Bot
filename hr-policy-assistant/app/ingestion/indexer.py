@@ -9,14 +9,7 @@ class PolicyIndexer:
         self.vector_store = VectorStore()
 
     def index_chunks(self, chunks: list[dict]):
-        """
-        Generate embeddings and store chunks in ChromaDB.
-
-        Any previously indexed chunks belonging to the same
-        document are deleted first, so re-indexing a document
-        (e.g. an updated policy) replaces the old chunks instead
-        of leaving stale ones behind alongside the new ones.
-        """
+        
 
         if not chunks:
             return 0

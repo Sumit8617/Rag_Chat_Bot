@@ -5,9 +5,7 @@ SUPPORTED_EXTENSIONS = {".md", ".txt"}
 
 
 def load_document(file_path: str) -> str:
-    """
-    Read a Markdown or text policy document.
-    """
+    
 
     path = Path(file_path)
 

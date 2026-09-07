@@ -1,9 +1,6 @@
 class GroundingChecker:
 
     def __init__(self):
-        # Chroma distance.
-        # Lower distance means the retrieved chunk is more
-        # semantically similar to the user's question.
         self.max_distance = 0.75
 
         # RRF is only used as a secondary ranking signal.
@@ -16,16 +13,12 @@ class GroundingChecker:
 
         top_result = results[0]
 
-        # -------------------------------------------------
         # Explicit section reference
-        # -------------------------------------------------
 
         if top_result.get("exact_section_match", False):
             return True
 
-        # -------------------------------------------------
         # Semantic relevance check
-        # -------------------------------------------------
 
         distance = top_result.get("distance")
 
@@ -35,9 +28,7 @@ class GroundingChecker:
         if distance > self.max_distance:
             return False
 
-        # -------------------------------------------------
         # RRF ranking check
-        # -------------------------------------------------
 
         rrf_score = top_result.get("rrf_score", 0.0)
 

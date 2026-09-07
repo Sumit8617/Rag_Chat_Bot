@@ -17,9 +17,7 @@ class HybridRetriever:
 
         top_k = top_k or settings.top_k
 
-        # -------------------------------------------------
         # 1. Semantic retrieval
-        # -------------------------------------------------
         query_embedding = self.embedding_service.embed_query(query)
 
         vector_results = self.vector_store.search(
@@ -32,9 +30,7 @@ class HybridRetriever:
             for rank, result in enumerate(vector_results, start=1)
         }
 
-        # -------------------------------------------------
         # 2. Keyword retrieval over all chunks
-        # -------------------------------------------------
         all_chunks = self.vector_store.get_all_chunks()
 
         keyword_results = []
@@ -62,9 +58,7 @@ class HybridRetriever:
             for rank, result in enumerate(keyword_results, start=1)
         }
 
-        # -------------------------------------------------
         # 3. Combine candidates
-        # -------------------------------------------------
         candidates = {}
 
         for result in vector_results:
@@ -89,9 +83,7 @@ class HybridRetriever:
                     result["keyword_score"]
                 )
 
-        # -------------------------------------------------
         # 4. RRF scoring
-        # -------------------------------------------------
         rrf_k = 60
 
         for result in candidates.values():
@@ -111,9 +103,7 @@ class HybridRetriever:
 
             rrf_score = vector_component + keyword_component
 
-            # -------------------------------------------------
             # 5. Exact section-number boost
-            # -------------------------------------------------
             section_match = re.search(
                 r"\bsection\s+(\d+(?:\.\d+)+)\b",
                 query.lower()
@@ -133,9 +123,7 @@ class HybridRetriever:
             result["rrf_score"] = rrf_score
             result["exact_section_match"] = exact_section_match
 
-        # -------------------------------------------------
         # 6. Final ranking
-        # -------------------------------------------------
         ranked_results = sorted(
             candidates.values(),
             key=lambda x: x["rrf_score"],

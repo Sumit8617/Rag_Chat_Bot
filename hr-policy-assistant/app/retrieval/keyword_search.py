@@ -3,17 +3,10 @@ from collections import Counter
 
 
 def tokenize(text: str) -> list[str]:
-    """
-    Extract normalized tokens while preserving
-    section identifiers such as 4.1 and policy IDs.
-    """
+  
 
     text = text.lower()
 
-    # Capture:
-    # - section numbers: 4.1, 2.3
-    # - normal words: casual, leave, carry
-    # - abbreviations: cl, sl, pl
     tokens = re.findall(
         r"\b\d+(?:\.\d+)+\b|\b[a-zA-Z0-9]+\b",
         text

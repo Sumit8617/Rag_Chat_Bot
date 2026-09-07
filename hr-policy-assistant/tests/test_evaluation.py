@@ -4,9 +4,7 @@ from app.retrieval.hybrid import HybridRetriever
 from app.retrieval.grounding import GroundingChecker
 
 
-# ---------------------------------------------------------
 # Load evaluation questions
-# ---------------------------------------------------------
 
 with open(
     "tests/evaluation_questions.json",
@@ -16,17 +14,11 @@ with open(
     questions = json.load(f)
 
 
-# ---------------------------------------------------------
-# Initialize RAG components
-# ---------------------------------------------------------
-
 retriever = HybridRetriever()
 grounding_checker = GroundingChecker()
 
 
-# ---------------------------------------------------------
 # Evaluation counters
-# ---------------------------------------------------------
 
 total = len(questions)
 
@@ -55,45 +47,32 @@ for item in questions:
     question = item["question"]
     expected_answerable = item["answerable"]
 
-    # New format:
-    # expected_sections is a list because multiple sections
-    # can contain valid evidence for the same question.
     expected_sections = item.get("expected_sections", [])
 
-    # -----------------------------------------------------
     # Retrieve relevant chunks
-    # -----------------------------------------------------
 
     results = retriever.retrieve(
         question,
         top_k=5
     )
 
-    # -----------------------------------------------------
     # Grounding check
-    # -----------------------------------------------------
 
     grounded = grounding_checker.is_grounded(results)
 
-    # -----------------------------------------------------
+  
     # Get retrieved sections
-    # -----------------------------------------------------
 
     retrieved_sections = [
         result["metadata"]["section"]
         for result in results
     ]
 
-    # -----------------------------------------------------
     # Determine whether test passed
-    # -----------------------------------------------------
 
     correct = False
 
     if expected_answerable:
-
-        # For an answerable question, at least one of the
-        # expected sections should be retrieved.
 
         if any(
             section in retrieved_sections
@@ -104,17 +83,12 @@ for item in questions:
 
     else:
 
-        # For an unanswerable question, the system should
-        # NOT consider the retrieved chunks sufficient
-        # evidence.
 
         if not grounded:
             correct_refusals += 1
             correct = True
 
-    # -----------------------------------------------------
     # Print result
-    # -----------------------------------------------------
 
     status = "PASS" if correct else "FAIL"
 
@@ -153,9 +127,7 @@ for item in questions:
         print("Top result: None")
 
 
-# ---------------------------------------------------------
 # Calculate scores
-# ---------------------------------------------------------
 
 retrieval_percentage = (
     correct_retrieval / answerable_count * 100
@@ -179,10 +151,6 @@ overall_percentage = (
     else 0
 )
 
-
-# ---------------------------------------------------------
-# Print summary
-# ---------------------------------------------------------
 
 print("\n" + "=" * 80)
 print("SUMMARY")

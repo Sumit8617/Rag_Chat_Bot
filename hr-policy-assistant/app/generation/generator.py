@@ -34,9 +34,7 @@ class PolicyGenerator:
         chunks: list[dict]
     ) -> AnswerResponse:
 
-        # -------------------------------------------------
         # Validate chunks
-        # -------------------------------------------------
 
         if not chunks:
 
@@ -49,19 +47,14 @@ class PolicyGenerator:
             )
 
 
-        # -------------------------------------------------
         # Build prompt
-        # -------------------------------------------------
 
         prompt = build_prompt(
             query,
             chunks
         )
 
-
-        # -------------------------------------------------
         # Generate response with retry
-        # -------------------------------------------------
 
         response = None
 
@@ -87,9 +80,7 @@ class PolicyGenerator:
                     f"{error_message}"
                 )
 
-                # -----------------------------------------
                 # Detect temporary errors
-                # -----------------------------------------
 
                 is_retryable = (
                     "429" in error_message
@@ -98,9 +89,7 @@ class PolicyGenerator:
                     or "UNAVAILABLE" in error_message
                 )
 
-                # -----------------------------------------
                 # If not retryable, stop immediately
-                # -----------------------------------------
 
                 if not is_retryable:
 
@@ -109,9 +98,7 @@ class PolicyGenerator:
                         "Please try again later."
                     )
 
-                # -----------------------------------------
                 # No more retries
-                # -----------------------------------------
 
                 if attempt >= self.max_retries:
 
@@ -127,9 +114,7 @@ class PolicyGenerator:
                         "unavailable. Please try again later."
                     )
 
-                # -----------------------------------------
                 # Exponential backoff
-                # -----------------------------------------
 
                 delay = self.retry_delay * (2 ** attempt)
 
@@ -140,10 +125,7 @@ class PolicyGenerator:
 
                 time.sleep(delay)
 
-
-        # -------------------------------------------------
         # Validate response
-        # -------------------------------------------------
 
         if response is None:
 
@@ -153,9 +135,7 @@ class PolicyGenerator:
             )
 
 
-        # -------------------------------------------------
         # Get response text safely
-        # -------------------------------------------------
 
         try:
 
@@ -177,9 +157,7 @@ class PolicyGenerator:
         text = text.strip()
 
 
-        # -------------------------------------------------
         # Remove markdown JSON code fences
-        # -------------------------------------------------
 
         if text.startswith("```json"):
 
@@ -198,9 +176,7 @@ class PolicyGenerator:
         text = text.strip()
 
 
-        # -------------------------------------------------
         # Parse JSON
-        # -------------------------------------------------
 
         try:
 
@@ -219,9 +195,7 @@ class PolicyGenerator:
             ) from exc
 
 
-        # -------------------------------------------------
         # Validate Pydantic response
-        # -------------------------------------------------
 
         try:
 
@@ -243,9 +217,6 @@ class PolicyGenerator:
             ) from exc
 
 
-    # =====================================================
-    # Helper for API errors
-    # =====================================================
 
     def _error_response(
         self,

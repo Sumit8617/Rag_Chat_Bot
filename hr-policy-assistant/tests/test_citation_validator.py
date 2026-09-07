@@ -20,9 +20,6 @@ def main():
         }
     ]
 
-    # -----------------------------------------
-    # Test 1: Valid citations
-    # -----------------------------------------
 
     citations = [
         {
@@ -41,9 +38,6 @@ def main():
 
     assert len(result) == 1
 
-    # -----------------------------------------
-    # Test 2: Invalid section
-    # -----------------------------------------
 
     citations = [
         {
@@ -62,9 +56,6 @@ def main():
 
     assert len(result) == 0
 
-    # -----------------------------------------
-    # Test 3: Invalid document
-    # -----------------------------------------
 
     citations = [
         {
@@ -83,10 +74,7 @@ def main():
 
     assert len(result) == 0
 
-    # -----------------------------------------
-    # Test 4: Mixed citations
-    # -----------------------------------------
-
+   
     citations = [
         {
             "document": "leave-policy.md",

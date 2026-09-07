@@ -103,7 +103,6 @@ def chunk_document(
         else:
             current_content.append(line)
 
-    # Save final section
     if current_content:
         sections.append(
             {
@@ -137,10 +136,6 @@ def chunk_document(
             chunk_number += 1
             continue
 
-        # Split large sections into block-aware chunks. Blocks
-        # are packed together up to max_chars, but a Markdown
-        # table is never split mid-row -- it becomes its own
-        # chunk even if that means exceeding max_chars.
         blocks = _split_into_blocks(content)
 
         current_text = ""
@@ -168,10 +163,6 @@ def chunk_document(
                 )
                 chunk_number += 1
 
-                # Carry a little trailing context into the next
-                # chunk for continuity, unless the next block is
-                # a table -- tables must start cleanly on their
-                # own header row.
                 if not is_table_block and overlap > 0:
                     tail = current_text[-overlap:]
                     current_text = f"{tail}\n\n{block}".strip()

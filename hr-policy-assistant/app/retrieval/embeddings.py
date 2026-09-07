@@ -13,7 +13,7 @@ class EmbeddingService:
 
         self.model = SentenceTransformer(
             settings.embedding_model,
-            local_files_only=True
+            local_files_only=settings.embedding_local_files_only
         )
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:

@@ -7,6 +7,8 @@ class Settings(BaseSettings):
 
     embedding_model: str = "all-MiniLM-L6-v2"
 
+    embedding_local_files_only: bool = True
+
     chroma_path: str = "./chroma_db"
 
     top_k: int = 5
