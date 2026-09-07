@@ -7,8 +7,9 @@ from app.retrieval.keyword_search import keyword_score
 
 
 class HybridRetriever:
-    def __init__(self):
-        self.embedding_service = EmbeddingService()
+    def __init__(self, embedding_service: EmbeddingService | None = None):
+
+        self.embedding_service = embedding_service or EmbeddingService()
         self.vector_store = VectorStore()
 
     def retrieve(self, query: str, top_k: int | None = None) -> list[dict]:
@@ -83,8 +84,9 @@ class HybridRetriever:
                     result["keyword_score"]
                 )
 
-        # 4. RRF scoring
-        rrf_k = 60
+        rrf_k = settings.rrf_k
+        vector_weight = settings.rrf_vector_weight
+        keyword_weight = settings.rrf_keyword_weight
 
         for result in candidates.values():
 
@@ -93,12 +95,12 @@ class HybridRetriever:
 
             if result["vector_rank"] is not None:
                 vector_component = (
-                    0.7 / (rrf_k + result["vector_rank"])
+                    vector_weight / (rrf_k + result["vector_rank"])
                 )
 
             if result["keyword_rank"] is not None:
                 keyword_component = (
-                    0.3 / (rrf_k + result["keyword_rank"])
+                    keyword_weight / (rrf_k + result["keyword_rank"])
                 )
 
             rrf_score = vector_component + keyword_component

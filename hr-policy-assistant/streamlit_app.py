@@ -2,6 +2,7 @@ import logging
 
 import streamlit as st
 
+from app.retrieval.embeddings import EmbeddingService
 from app.services.qa_service import QAService
 from app.services.ingestion_service import IngestionService
 
@@ -15,13 +16,19 @@ st.set_page_config(
 
 
 @st.cache_resource
+def get_embedding_service():
+   
+    return EmbeddingService()
+
+
+@st.cache_resource
 def get_qa_service():
-    return QAService()
+    return QAService(embedding_service=get_embedding_service())
 
 
 @st.cache_resource
 def get_ingestion_service():
-    return IngestionService()
+    return IngestionService(embedding_service=get_embedding_service())
 
 
 @st.cache_resource

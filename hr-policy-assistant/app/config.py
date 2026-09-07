@@ -13,6 +13,16 @@ class Settings(BaseSettings):
 
     top_k: int = 5
 
+    rrf_k: int = 60
+    rrf_vector_weight: float = 0.7
+    rrf_keyword_weight: float = 0.3
+
+    grounding_max_distance: float = 0.75
+
+    grounding_rrf_threshold_fraction: float = 0.5
+
+    grounding_top_n_check: int = 3
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore"

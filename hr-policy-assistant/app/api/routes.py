@@ -4,6 +4,7 @@ from functools import lru_cache
 from fastapi import APIRouter, HTTPException, UploadFile, File
 
 from app.api.schemas import AskRequest, AskResponse, UploadResponse
+from app.retrieval.embeddings import EmbeddingService
 from app.services.qa_service import QAService
 from app.services.ingestion_service import IngestionService
 
@@ -12,14 +13,21 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+
+@lru_cache(maxsize=1)
+def get_embedding_service() -> EmbeddingService:
+
+    return EmbeddingService()
+
+
 @lru_cache(maxsize=1)
 def get_qa_service() -> QAService:
-    return QAService()
+    return QAService(embedding_service=get_embedding_service())
 
 
 @lru_cache(maxsize=1)
 def get_ingestion_service() -> IngestionService:
-    return IngestionService()
+    return IngestionService(embedding_service=get_embedding_service())
 
 
 @router.get("/health")

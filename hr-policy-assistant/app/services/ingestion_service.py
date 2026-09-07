@@ -3,6 +3,7 @@ from pathlib import Path
 from app.ingestion.loader import load_document, SUPPORTED_EXTENSIONS
 from app.ingestion.chunker import chunk_document
 from app.ingestion.indexer import PolicyIndexer
+from app.retrieval.embeddings import EmbeddingService
 
 
 UPLOAD_DIR = Path("data/policies")
@@ -10,8 +11,9 @@ UPLOAD_DIR = Path("data/policies")
 
 class IngestionService:
 
-    def __init__(self):
-        self.indexer = PolicyIndexer()
+    def __init__(self, embedding_service: EmbeddingService | None = None):
+        
+        self.indexer = PolicyIndexer(embedding_service=embedding_service)
         UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     def ingest_upload(self, filename: str, file_bytes: bytes) -> dict:

@@ -4,8 +4,9 @@ from app.retrieval.vector_store import VectorStore
 
 class PolicyIndexer:
 
-    def __init__(self):
-        self.embedding_service = EmbeddingService()
+    def __init__(self, embedding_service: EmbeddingService | None = None):
+        
+        self.embedding_service = embedding_service or EmbeddingService()
         self.vector_store = VectorStore()
 
     def index_chunks(self, chunks: list[dict]):
