@@ -5,6 +5,7 @@ from app.ingestion.loader import load_document, SUPPORTED_EXTENSIONS
 from app.ingestion.chunker import chunk_document
 from app.ingestion.indexer import PolicyIndexer
 from app.retrieval.vector_store import VectorStore
+from app.retrieval.embeddings import EmbeddingService
 
 
 logger = logging.getLogger(__name__)
@@ -12,8 +13,9 @@ logger = logging.getLogger(__name__)
 SAMPLE_POLICIES_DIR = Path("data/policies")
 
 
-def seed_sample_policies_if_empty() -> int:
-
+def seed_sample_policies_if_empty(
+    embedding_service: EmbeddingService | None = None
+) -> int:
     vector_store = VectorStore()
 
     if vector_store.get_all_chunks():
@@ -30,11 +32,10 @@ def seed_sample_policies_if_empty() -> int:
         )
         return 0
 
-    indexer = PolicyIndexer()
+    indexer = PolicyIndexer(embedding_service=embedding_service)
     total_indexed = 0
 
     for path in sorted(SAMPLE_POLICIES_DIR.iterdir()):
-
         if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
             continue
 
@@ -43,7 +44,6 @@ def seed_sample_policies_if_empty() -> int:
         count = indexer.index_chunks(chunks)
 
         logger.info("Seeded %s -> %d chunks", path.name, count)
-
         total_indexed += count
 
     return total_indexed

@@ -6,18 +6,6 @@ TABLE_LINE_PATTERN = re.compile(r"^\s*\|.*\|\s*$")
 
 
 def _split_into_blocks(content: str) -> List[str]:
-    """
-    Split section content into blocks for packing into chunks.
-
-    A Markdown table (a contiguous run of lines starting and
-    ending with '|') is kept together as a single atomic block,
-    even if it later exceeds max_chars. This prevents a table
-    row from being split across two chunks, which would break
-    lookups like "does the Standard tier cover dental implants?"
-    
-    Non-table content is split into paragraph blocks on blank
-    lines.
-    """
 
     lines = content.split("\n")
     blocks = []

@@ -43,15 +43,18 @@ def build_prompt(query: str, chunks: list[dict]) -> str:
 
     for i, chunk in enumerate(chunks, start=1):
 
-        metadata = chunk["metadata"]
+        metadata = chunk.get("metadata", {})
+        doc_name = metadata.get("document") or chunk.get("document", "Policy Document")
+        section = metadata.get("section", "General")
+        text = chunk.get("text") or chunk.get("document", "")
 
         context_parts.append(
             f"""
 SOURCE {i}
-Document: {metadata['document']}
-Section: {metadata['section']}
+Document: {doc_name}
+Section: {section}
 
-{chunk['document']}
+{text}
 """
         )
 
