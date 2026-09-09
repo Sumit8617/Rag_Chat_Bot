@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 from app.services.qa_service import QAService
 
 
@@ -7,6 +15,8 @@ def main():
 
     questions = [
         "How many casual leave days can I carry forward?",
+        "Does the Standard health tier cover dental implants?",
+        "Can I send confidential company files to my personal Gmail?",
         "Can sick leave be carried to the next year?",
         "How many privilege leave days can I carry forward?",
         "Can I expense a personal home gym?",

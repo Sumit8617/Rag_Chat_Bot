@@ -23,7 +23,7 @@ st.set_page_config(
     page_title="HR Policy Assistant",
     page_icon="🏢",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 # Synchronize API key and model from settings if not in os.environ
@@ -76,6 +76,13 @@ def get_qa_service():
     return QAService()
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def query_policy_cached(question: str):
+    """Cache answers for identical questions for 1 hour to reduce latency."""
+    service = get_qa_service()
+    return service.ask(question)
+
+
 @st.cache_resource
 def get_ingestion_service():
     """Create and cache the IngestionService singleton."""
@@ -105,6 +112,7 @@ def ensure_sample_policies_seeded():
 ensure_sample_policies_seeded()
 
 
+@st.cache_data(ttl=300)
 def get_library_stats():
     """Extract metadata and chunk distribution from the vector store."""
     try:
@@ -132,14 +140,12 @@ def get_library_stats():
 
 CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
-
 html, body, [class*="css"] {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 h1, h2, h3, h4, .hero-title {
-    font-family: 'Outfit', 'Inter', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     letter-spacing: -0.02em;
 }
 
@@ -152,6 +158,8 @@ h1, h2, h3, h4, .hero-title {
 
 /* Hero Section */
 .hero-card {
+    min-height: 130px;
+    contain: layout style;
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
@@ -351,18 +359,36 @@ if "pending_prompt" not in st.session_state:
     st.session_state.pending_prompt = None
 
 # ============================================================
-# Sidebar: Diagnostics, Policy Explorer & Admin
+# Main Header / Hero Section (Rendered first for fast LCP & stable CLS)
 # ============================================================
 
-library_stats = get_library_stats()
+st.markdown(
+    """
+    <div class="hero-card">
+        <div class="hero-badge">
+            ✨ Enterprise RAG • Grounded & Verifiable
+        </div>
+        <div class="hero-title">
+            HR Policy Assistant
+        </div>
+        <div class="hero-subtitle">
+            Get instant, verifiable answers to company HR policies with strict source citations.
+            Answers are guaranteed to be grounded only in official policy documents.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ============================================================
+# Sidebar: Diagnostics, Policy Explorer & Admin
+# ============================================================
 
 with st.sidebar:
     st.markdown("### 🏢 HR Policy Center")
     st.caption("AI-powered HR assistant with strict retrieval grounding and verifiable citations.")
 
     st.divider()
-
-
 
     # Admin: Upload Policy
     st.markdown("#### 📤 Admin: Upload Policy")
@@ -395,6 +421,8 @@ with st.sidebar:
                         f"Indexed `{result['document']}` with {result['chunks_indexed']} chunks."
                     )
                     get_qa_service.clear()
+                    query_policy_cached.clear()
+                    get_library_stats.clear()
                     st.rerun()
 
                 except ValueError as exc:
@@ -445,29 +473,6 @@ with st.sidebar:
             )
         else:
             st.button("📥 Export", disabled=True, use_container_width=True)
-
-
-# ============================================================
-# Main Header / Hero Section
-# ============================================================
-
-st.markdown(
-    f"""
-    <div class="hero-card">
-        <div class="hero-badge">
-            ✨ Enterprise RAG • Grounded & Verifiable
-        </div>
-        <div class="hero-title">
-            HR Policy Assistant
-        </div>
-        <div class="hero-subtitle">
-            Get instant, verifiable answers to company HR policies with strict source citations.
-            Answers are guaranteed to be grounded only in official policy documents.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 
 
 # ============================================================
@@ -583,8 +588,6 @@ if prompt_to_run:
         st.markdown(prompt_to_run)
 
     with st.chat_message("assistant", avatar="🤖"):
-        qa_service = get_qa_service()
-
         answer = ""
         citations = []
         grounded = False
@@ -595,7 +598,7 @@ if prompt_to_run:
         with st.spinner("🔎 Searching policies and generating grounded answer..."):
             start_t = time.time()
             try:
-                result = qa_service.ask(prompt_to_run)
+                result = query_policy_cached(prompt_to_run)
                 latency = time.time() - start_t
 
                 if isinstance(result, dict):

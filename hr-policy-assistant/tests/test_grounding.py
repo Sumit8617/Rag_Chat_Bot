@@ -1,4 +1,8 @@
+import sys
+from pathlib import Path
 from dataclasses import dataclass
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.retrieval.grounding import GroundingChecker
 
@@ -140,8 +144,27 @@ def test_is_grounded_helper():
     print("PASS: is_grounded helper")
 
 
+def test_exact_section_match_dict_key():
+    checker = GroundingChecker()
+
+    # Dictionary result with exact_section_match=True as emitted by HybridRetriever
+    dict_results = [
+        {
+            "distance": 0.85,
+            "rrf_score": 0.012,
+            "keyword_score": 0.10,
+            "exact_section_match": True
+        }
+    ]
+
+    decision = checker.check(dict_results)
+    assert decision.grounded is True
+    print("PASS: exact_section_match dict key is grounded")
+
+
 if __name__ == "__main__":
     test_exact_section_is_grounded()
+    test_exact_section_match_dict_key()
     test_strong_semantic_result_is_grounded()
     test_strong_keyword_and_semantic_result_is_grounded()
     test_weak_result_is_not_grounded()

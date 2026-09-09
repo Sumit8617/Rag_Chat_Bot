@@ -45,8 +45,14 @@ class GroundingChecker:
             exact_section = self._get_value(
                 result,
                 "exact_section",
-                False
+                None
             )
+            if exact_section is None:
+                exact_section = self._get_value(
+                    result,
+                    "exact_section_match",
+                    False
+                )
 
             if exact_section is True:
                 return GroundingDecision(
