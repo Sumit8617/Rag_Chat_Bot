@@ -21,7 +21,7 @@ class GroundingChecker:
     """
 
     # Lower Chroma distance = better semantic similarity.
-    STRONG_DISTANCE_THRESHOLD = 0.35
+    STRONG_DISTANCE_THRESHOLD = 0.25
 
     # Hybrid retrieval score.
     MIN_RRF_SCORE = 0.015

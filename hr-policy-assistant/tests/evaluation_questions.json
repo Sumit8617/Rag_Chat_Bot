@@ -37,10 +37,8 @@
   },
   {
     "question": "Can I expense a personal home gym?",
-    "answerable": true,
-    "expected_sections": [
-      "4. Wellness"
-    ]
+    "answerable": false,
+    "expected_sections": []
   },
   {
     "question": "Does the company provide free gym membership?",

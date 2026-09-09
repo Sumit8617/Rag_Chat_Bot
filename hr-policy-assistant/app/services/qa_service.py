@@ -181,6 +181,18 @@ class QAService:
                 "citations": [],
             }
 
+        lower_answer = raw_answer.lower()
+        if (
+            "don't have enough information" in lower_answer
+            or "do not have enough information" in lower_answer
+            or "contact hr" in lower_answer
+            or "not enough information" in lower_answer
+        ):
+            return {
+                "answer": self.REFUSAL_MESSAGE,
+                "citations": [],
+            }
+
         return {
             "answer": raw_answer or self.REFUSAL_MESSAGE,
             "citations": citations,
