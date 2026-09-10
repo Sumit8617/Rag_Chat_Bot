@@ -390,3 +390,4 @@ Then run `.\venv\Scripts\Activate.ps1` again.
 ---
 
 ## 📄 License
+This project is licensed under the MIT License — feel free to use and adapt it for your team or organization!
