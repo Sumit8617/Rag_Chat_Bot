@@ -1,243 +1,698 @@
 # 🏢 HR Policy Assistant
 
-> **An AI-powered HR Assistant that answers employee questions strictly from approved company policies — with exact source citations and zero hallucinated answers.**
+> **An AI-powered HR assistant that answers employee questions using approved company policies, with source citations and safe refusal when the required information is not available.**
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg)](https://fastapi.tiangolo.com)
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.63+-FF4B4B.svg)](https://streamlit.io)
-[![ChromaDB](https://img.shields.io/badge/Vector_DB-ChromaDB-orange.svg)](https://www.trychroma.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Instead of searching through lengthy HR documents, employees can simply ask questions in natural language and receive a concise answer along with the relevant policy document and section.
 
 ---
 
-## 🌟 Table of Contents
-- [📖 What is this Project?](#-what-is-this-project)
-- [🧠 How It Works (In Plain English)](#-how-it-works-in-plain-english)
-- [⚡ Quick Start Guide (Step-by-Step)](#-quick-start-guide-step-by-step)
-  - [1. Prerequisites](#1-prerequisites)
-  - [2. Clone and Setup Environment](#2-clone-and-setup-environment)
-  - [3. Get a Free Gemini API Key](#3-get-a-free-gemini-api-key)
-  - [4. Download the Embedding Model (One-Time)](#4-download-the-embedding-model-one-time)
-  - [5. Run the Application](#5-run-the-application)
-- [💬 Questions You Can Try](#-questions-you-can-try)
-- [📤 Admin: Uploading New Policies](#-admin-uploading-new-policies)
-- [🛠️ REST API Usage (FastAPI)](#️-rest-api-usage-fastapi)
-- [📂 Project Structure](#-project-structure)
-- [🧪 Running Tests](#-running-tests)
-- [❓ Frequently Asked Questions (FAQ) & Troubleshooting](#-frequently-asked-questions-faq--troubleshooting)
+## 🎥 Demo
+
+### ▶️ Project Demo
+
+**[Watch the Demo Video](https://drive.google.com/drive/folders/1u9lrw5fB3j6226FqUH0ZZutn9E6TGgvC?usp=sharing)**
+
+The demo shows:
+
+* 💬 Asking HR questions using natural language
+* 📄 Getting answers from company policy documents
+* 📌 Viewing the source and section used for an answer
+* 🛡️ Safe refusal for unsupported questions
+* 📤 Uploading new policy documents
+* 📥 Exporting conversations
 
 ---
 
-## 📖 What is this Project?
+## 📑 Table of Contents
 
-When employees have questions about **leave balances, health benefits, travel allowances, or IT security rules**, searching through lengthy HR PDF or Markdown handbooks is time-consuming. 
+* [Overview](#-overview)
+* [Key Features](#-key-features)
+* [System Workflow](#-system-workflow)
+* [Architecture](#-architecture)
+* [Tech Stack](#️-tech-stack)
+* [Project Structure](#-project-structure)
+* [Quick Start](#-quick-start)
 
-Normal AI chatbots (like ChatGPT) often **hallucinate** (make up plausible-sounding answers that aren't true). For company policies, an invented answer can cause serious compliance and financial issues.
-
-**HR Policy Assistant solves this problem:**
-- ✅ **100% Policy-Grounded:** Answers only using the exact documents uploaded by your company.
-- 📄 **Verifiable Citations:** Every answer references the document name and specific clause (e.g., `leave-policy.md → Section 4.1 Casual leave carry-forward`).
-- 🛡️ **Safe Refusal:** If a policy doesn't mention something (e.g., *"Does the company have a pet policy?"*), the assistant honestly replies: *"I don't have enough information in the uploaded policies to answer this question. Please contact HR."*
-- 💰 **100% Free to Run:** Uses local embeddings (`all-MiniLM-L6-v2`) and the free tier of Google Gemini API.
+  * [Prerequisites](#prerequisites)
+  * [1. Clone and Setup Environment](#1-clone-and-setup-environment)
+  * [2. Install Dependencies](#2-install-dependencies)
+  * [3. Configure Gemini API](#3-configure-gemini-api)
+  * [4. Download Embedding Model](#4-download-embedding-model)
+  * [5. Run the Application](#5-run-the-application)
+* [Questions You Can Try](#-questions-you-can-try)
+* [Admin: Uploading New Policies](#-admin-uploading-new-policies)
+* [REST API](#-rest-api)
+* [Running Tests](#-running-tests)
+* [Privacy and Security](#-privacy-and-security)
+* [FAQ & Troubleshooting](#-faq--troubleshooting)
+* [License](#-license)
 
 ---
 
-## 🧠 How It Works (In Plain English)
+# 📖 Overview
 
-This project uses an industry-standard architecture called **RAG (Retrieval-Augmented Generation)**:
+Employees often need quick answers about:
+
+* 🏖️ Leave policies
+* 🏥 Health benefits
+* 🔒 IT security rules
+* 💻 Software and browser-extension policies
+* 📋 Other company policies
+
+Searching through long policy documents manually can be time-consuming.
+
+The **HR Policy Assistant** provides a simple chat interface where employees can ask questions and receive answers based on the company's uploaded policy documents.
+
+### Example
+
+**Employee asks:**
+
+> How many casual leaves can I carry forward to next year?
+
+**Assistant answers:**
+
+> You can carry forward a maximum of **8 days** of unused casual leave to the next calendar year.
+
+**Source:**
 
 ```text
-               ┌───────────────────────────────┐
-               │    HR Policy Documents        │
-               │ (.md / .txt files in storage) │
-               └──────────────┬────────────────┘
+leave-policy.md → Section 4.1 Casual leave carry-forward
+```
+
+This makes the answer easier to verify against the original policy.
+
+---
+
+## 🎯 Problem Being Solved
+
+A normal AI chatbot may generate an answer based on its general knowledge, even when the information does not exist in a company's policies.
+
+For HR and compliance-related questions, this can lead to incorrect information.
+
+This project addresses the problem using a **Retrieval-Augmented Generation (RAG)** approach.
+
+The system:
+
+1. Searches the company's policy documents.
+2. Finds relevant information.
+3. Checks whether enough evidence exists.
+4. Generates an answer using the retrieved information.
+5. Validates the citations before showing the response.
+
+If the required information cannot be found, the assistant **refuses instead of guessing**.
+
+---
+
+# ✨ Key Features
+
+### 💬 Natural Language Questions
+
+Employees can ask questions in normal language without needing to know the exact wording used in the policy.
+
+---
+
+### 📚 Policy-Grounded Answers
+
+The assistant uses the uploaded company policies as its primary knowledge source.
+
+It does not intentionally rely on general AI knowledge when answering policy questions.
+
+---
+
+### 🔎 Hybrid Search
+
+The application combines two search methods:
+
+**Vector Search**
+
+Finds information based on meaning.
+
+For example:
+
+> "Can I carry unused leave to next year?"
+
+can match a policy section containing:
+
+> "Casual leave carry-forward."
+
+**Keyword Search**
+
+Looks for important or exact terms from the question.
+
+The results from both methods are combined using **Reciprocal Rank Fusion (RRF)** to improve retrieval quality.
+
+---
+
+### 🛡️ Grounding / Safe Refusal
+
+Before generating an answer, the system checks whether the retrieved policy information is strong enough.
+
+If sufficient evidence is not found, the system refuses to answer.
+
+Example:
+
+> **Question:** What is the company's maternity leave policy?
+
+If maternity leave is not present in the uploaded policies, the assistant responds:
+
+> I don't have enough information in the uploaded policies to answer this question. Please contact HR.
+
+This prevents the system from simply making up an answer.
+
+---
+
+### 📌 Source Citations
+
+Policy-based answers include the document and section used to generate the response.
+
+Example:
+
+```text
+Document: leave-policy.md
+Section: 4.1 Casual leave carry-forward
+```
+
+This allows users to verify the information.
+
+---
+
+### 📤 Upload New Policies
+
+Administrators can upload new Markdown or text-based policy documents directly from the Streamlit interface.
+
+The application processes the document and makes it searchable.
+
+---
+
+### 📥 Export Conversations
+
+Users can export their conversation transcript as a Markdown file.
+
+---
+
+# 🔄 System Workflow
+
+The system follows a multi-stage RAG pipeline.
+
+```text
+                    📄 HR Policy Documents
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │ Document Loader │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ✂️ Document Chunking
+                             │
+                             ▼
+                    🔢 Embedding Generation
+                             │
+                             ▼
+                    🗄️ ChromaDB
+                    Vector Database
+                             │
+                             │
+                      👤 User Question
+                             │
+                             ▼
+                    🔍 Hybrid Retrieval
+                             │
+                 ┌───────────┴───────────┐
+                 ▼                       ▼
+          Vector Search            Keyword Search
+          Meaning-based            Exact-term
+             Search                  Search
+                 │                       │
+                 └───────────┬───────────┘
+                             ▼
+                       🔀 RRF Fusion
+                             │
+                             ▼
+                  ⭐ Top Relevant Chunks
+                             │
+                             ▼
+                    🛡️ Grounding Check
+                             │
+                    ┌────────┴────────┐
+                    ▼                 ▼
+                  ❌ NO              ✅ YES
+                    │                 │
+                    ▼                 ▼
+               Safe Refusal      🤖 Gemini
+                                  Answer Generation
+                                       │
+                                       ▼
+                              📌 Citation Validation
+                                       │
+                                       ▼
+                                💬 Final Answer
+                                  + Citations
+```
+
+### Workflow Stages
+
+| Stage                   | Description                                              |
+| ----------------------- | -------------------------------------------------------- |
+| **Document Loading**    | Reads supported HR policy files                          |
+| **Chunking**            | Divides large documents into smaller searchable sections |
+| **Embedding**           | Converts text into numerical representations             |
+| **Indexing**            | Stores searchable information in ChromaDB                |
+| **Vector Search**       | Finds relevant information based on meaning              |
+| **Keyword Search**      | Finds relevant exact terms and clauses                   |
+| **RRF Fusion**          | Combines and ranks results from both searches            |
+| **Grounding Check**     | Determines whether enough evidence exists                |
+| **Generation**          | Gemini creates the final response                        |
+| **Citation Validation** | Verifies generated citations against retrieved content   |
+| **Final Response**      | Returns the answer and source information                |
+
+---
+
+# 🏗️ Architecture
+
+The application is organized into separate layers for the user interface, API, retrieval, document processing, generation, and validation.
+
+```text
+                         👤 Employee
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │   Streamlit Web UI  │
+                  │                     │
+                  │ • Chat              │
+                  │ • Policy Upload     │
+                  │ • Citations         │
+                  │ • Export            │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │   FastAPI Backend   │
+                  │                     │
+                  │ • /ask              │
+                  │ • /documents        │
+                  │ • /health           │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │     QA Service      │
+                  │                     │
+                  │ Retrieve → Ground   │
+                  │ → Generate → Verify │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+              ┌──────────────────────────────┐
+              │      Hybrid Retrieval        │
+              │                              │
+              │   ┌──────────┐ ┌──────────┐ │
+              │   │  Vector  │ │ Keyword  │ │
+              │   │  Search  │ │  Search  │ │
+              │   └────┬─────┘ └────┬─────┘ │
+              │        └──────┬─────┘        │
+              │               ▼              │
+              │           RRF Fusion          │
+              └───────────────┬──────────────┘
                               │
                               ▼
-                       [1. Ingestion]
-        Chunks documents into sections & converts them 
-        into mathematical vectors (Embeddings) locally.
+                     ┌─────────────────┐
+                     │    ChromaDB     │
+                     │  Vector Store   │
+                     └─────────────────┘
                               │
                               ▼
-                      [2. ChromaDB]
-                 (Local Vector Database)
+                     ┌─────────────────┐
+                     │    Grounding    │
+                     │      Check      │
+                     └────────┬────────┘
                               │
-                              │
-User asks question ───────────┼────────────────────────┐
-                              ▼                        ▼
-                       [Vector Search]         [Keyword Search]
-                       (Understands meaning)   (Matches exact terms/clauses)
-                              │                        │
-                              └───────────┬────────────┘
-                                          ▼
-                                [3. Hybrid RRF Fusion]
-                           Ranks the best matching chunks
-                                          │
-                                          ▼
-                             [4. Grounding Gatekeeper]
-                           Is there enough solid evidence?
-                           ├── NO  ──► Safe Refusal (No LLM called)
-                           └── YES ──► Send context to Gemini
-                                          │
-                                          ▼
-                                [5. Gemini LLM Answer]
-                         Writes concise answer with citations
-                                          │
-                                          ▼
-                              [6. Citation Validator]
-                        Validates citations against retrieved text
-                                          │
-                                          ▼
-                             Final Answer with Citations
+                         Evidence?
+                       ┌──────┴──────┐
+                       ▼             ▼
+                     ❌ No          ✅ Yes
+                       │             │
+                       ▼             ▼
+                    Refusal       🤖 Gemini
+                                     │
+                                     ▼
+                              Answer Generator
+                                     │
+                                     ▼
+                              Citation Validator
+                                     │
+                                     ▼
+                              💬 Final Response
+```
+
+### Architecture Components
+
+| Component              | Responsibility                                               |
+| ---------------------- | ------------------------------------------------------------ |
+| **Streamlit**          | Provides the interactive user interface                      |
+| **FastAPI**            | Provides backend REST API endpoints                          |
+| **QA Service**         | Coordinates the complete question-answering pipeline         |
+| **Ingestion Service**  | Processes and indexes uploaded policy documents              |
+| **Hybrid Retrieval**   | Searches policy information using vector and keyword methods |
+| **ChromaDB**           | Stores document embeddings and metadata                      |
+| **Grounding**          | Checks whether retrieved information is sufficient           |
+| **Gemini**             | Generates the final natural-language response                |
+| **Citation Validator** | Verifies citations against retrieved policy content          |
+
+---
+
+# 🛠️ Tech Stack
+
+| Category            | Technology            | Purpose                                              |
+| ------------------- | --------------------- | ---------------------------------------------------- |
+| **Language**        | Python 3.10+          | Core application development                         |
+| **Backend**         | FastAPI               | REST API and backend services                        |
+| **Frontend**        | Streamlit             | Interactive web chat interface                       |
+| **LLM**             | Google Gemini         | Generates answers from retrieved policy information  |
+| **Embeddings**      | Sentence Transformers | Converts policy text into searchable representations |
+| **Vector Database** | ChromaDB              | Stores and retrieves document embeddings             |
+| **Retrieval**       | Hybrid Search         | Combines vector and keyword search                   |
+| **Ranking**         | RRF                   | Combines and ranks retrieval results                 |
+| **Validation**      | Pydantic              | Request and response validation                      |
+| **Testing**         | Python Test Suite     | Tests retrieval and safety behavior                  |
+| **Configuration**   | `.env`                | Stores API keys and configuration                    |
+
+---
+
+# 📂 Project Structure
+
+```text
+hr-policy-assistant/
+│
+├── app/
+│   ├── config.py
+│   ├── main.py
+│   │
+│   ├── generation/
+│   │   ├── generator.py
+│   │   ├── prompt.py
+│   │   └── citation_validator.py
+│   │
+│   ├── ingestion/
+│   │   ├── chunker.py
+│   │   ├── indexer.py
+│   │   └── loader.py
+│   │
+│   ├── models/
+│   │   └── schemas.py
+│   │
+│   ├── retrieval/
+│   │   ├── embeddings.py
+│   │   ├── grounding.py
+│   │   ├── hybrid.py
+│   │   ├── keyword_search.py
+│   │   └── vector_store.py
+│   │
+│   └── services/
+│       ├── ingestion_service.py
+│       ├── qa_service.py
+│       └── startup.py
+│
+├── chroma_db/
+│
+├── data/
+│   └── policies/
+│
+├── tests/
+│   ├── test_citation_validator.py
+│   ├── test_evaluation.py
+│   ├── test_grounding.py
+│   ├── test_hybrid.py
+│   └── test_rag_pipeline.py
+│
+├── .env.example
+├── requirements.txt
+├── streamlit_app.py
+└── README.md
 ```
 
 ---
 
-## ⚡ Quick Start Guide (Step-by-Step)
+# 🚀 Quick Start
 
-Follow these steps to get the assistant running on your computer in under **5 minutes**.
+## Prerequisites
 
-### 1. Prerequisites
-- **Python 3.10 or higher** installed on your system.
-  - Check with: `python --version`
-- **Git** (optional, to clone the code).
+Before running the project, install:
+
+* **Python 3.10 or higher**
+* **Git** *(optional)*
+
+You will also need a **Google Gemini API key**.
 
 ---
 
-### 2. Clone and Setup Environment
+## 1. Clone and Setup Environment
 
-Open your terminal (**Command Prompt** or **PowerShell** on Windows, or **Terminal** on macOS/Linux):
+Clone the repository:
 
-#### On Windows (PowerShell):
-```powershell
-# 1. Navigate to the project directory
-cd D:\Rag_chat_bot\hr-policy-assistant
-
-# 2. Allow running local scripts in PowerShell (if needed)
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
-# 3. Create a virtual environment named 'venv'
-python -m venv venv
-
-# 4. Activate the virtual environment
-.\venv\Scripts\Activate.ps1
-
-# 5. Install the required packages
-pip install -r requirements.txt
-```
-
-#### On macOS / Linux:
 ```bash
-# 1. Navigate to the project directory
+git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd hr-policy-assistant
+```
 
-# 2. Create a virtual environment named 'venv'
+### Windows
+
+Create a virtual environment:
+
+```powershell
+python -m venv venv
+```
+
+Activate it:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks the command:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+
+Then activate the environment again.
+
+### macOS / Linux
+
+```bash
 python3 -m venv venv
-
-# 3. Activate the virtual environment
 source venv/bin/activate
+```
 
-# 4. Install the required packages
+---
+
+## 2. Install Dependencies
+
+Install the required Python packages:
+
+```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-### 3. Get a Free Gemini API Key
+## 3. Configure Gemini API
 
-The assistant uses Google's **Gemini 3.6 Flash** to turn policy excerpts into friendly answers. Getting a key is free and takes 30 seconds:
+The application uses Google Gemini to generate the final response.
 
-1. Go to [Google AI Studio](https://aistudio.google.com/apikey).
-2. Sign in with your Google account.
-3. Click **Create API Key**.
-4. Copy the generated key.
+Get an API key from:
 
-Now, configure your environment file:
-1. In the project folder, copy the example file:
-   - **Windows:** `copy .env.example .env`
-   - **macOS / Linux:** `cp .env.example .env`
-2. Open `.env` in any text editor (VS Code, Notepad, etc.).
-3. Paste your key:
-   ```env
-   GEMINI_API_KEY=your_actual_api_key_here
-   GEMINI_MODEL=gemini-3.6-flash
-   ```
+**Google AI Studio**
+
+https://aistudio.google.com/apikey
+
+Create a `.env` file in the project root:
+
+```env
+GEMINI_API_KEY=your_actual_api_key_here
+GEMINI_MODEL=gemini-3.6-flash
+```
+
+> ⚠️ **Never commit your real `.env` file or API key to GitHub.**
 
 ---
 
-### 4. Download the Embedding Model (One-Time)
+## 4. Download Embedding Model
 
-The assistant uses a lightweight AI model (`all-MiniLM-L6-v2`) to turn text into vectors. It runs completely offline on your own machine. Download it once:
+The application uses the lightweight `all-MiniLM-L6-v2` model to create searchable representations of the policy documents.
+
+Run this command once:
 
 ```bash
 python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 ```
-*(This downloads ~90 MB to your local cache. You will never need to download it again.)*
+
+The model runs locally on your machine.
 
 ---
 
-### 5. Run the Application
+## 5. Run the Application
 
-You have two ways to run the project:
+### 🌟 Option A — Streamlit Web Interface
 
-### Option A: Web Chat Interface (Streamlit) — **Recommended!** 🌟
+This is the recommended way to run the project.
 
-Run the following command in your terminal:
 ```bash
 streamlit run streamlit_app.py
 ```
 
-Your browser will open automatically at:
-👉 **`http://localhost:8501`**
+Open:
 
-Here you can:
-- Chat with the AI directly in a beautiful modern interface.
-- View verified citations and inspect exact retrieved text snippets.
-- Upload new HR policies in real-time from the sidebar!
-- Export your conversation transcript to Markdown.
+```text
+http://localhost:8501
+```
+
+The web interface allows you to:
+
+* Ask HR questions
+* View answers
+* Check citations
+* Inspect retrieved policy snippets
+* Upload new policies
+* Export conversations
 
 ---
 
-### Option B: FastAPI Backend Server (For Developers)
+### ⚙️ Option B — FastAPI Backend
 
-If you want to integrate this with another application or mobile app:
+The FastAPI server can be started using:
+
 ```bash
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-- **Health check:** Visit `http://127.0.0.1:8000/health`
-- **Interactive API Documentation:** Visit `http://127.0.0.1:8000/docs` to test endpoints directly from your browser!
+Health check:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+Interactive API documentation:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+> **For the normal project demo, Streamlit is enough.**
+> FastAPI is mainly useful when another application needs to communicate with the backend.
 
 ---
 
-## 💬 Questions You Can Try
+# 💬 Questions You Can Try
 
-The assistant comes pre-loaded with three sample policies (`leave-policy.md`, `benefits-policy.md`, `it-security-policy.md`).
+The application comes with three sample policies:
 
-Try asking these questions in the chat:
+```text
+leave-policy.md
+benefits-policy.md
+it-security-policy.md
+```
 
-| Type | Question to Try | Expected Behavior |
-|---|---|---|
-| 🏖️ **Leave Rules** | *"How many casual leaves can I carry forward to next year?"* | Answers **8 days**, citing `leave-policy.md → Section 4.1`. |
-| 🏥 **Health Benefits** | *"Does the Standard health tier cover dental implants?"* | Answers **No, dental implants are not covered under Standard**, citing `benefits-policy.md → Section 2`. |
-| 🔒 **IT Security** | *"Can I send confidential company files to my personal Gmail?"* | Answers **No, Confidential and Restricted files must not be sent to personal email**, citing `it-security-policy.md → Section 4`. |
-| 💻 **Software Policy** | *"Can I install any browser extension I want?"* | Answers that **only approved software is allowed and extensions reading page content require InfoSec review**, citing `it-security-policy.md → Section 5`. |
-| ❌ **Off-Policy (Refusal)** | *"What is the company's maternity leave policy?"* | Safely refuses: *"I don't have enough information in the uploaded policies to answer this question. Please contact HR."* |
-| ❌ **Random / Out-of-Scope** | *"Can I bring my pet iguana to the office?"* | Safely refuses immediately without making up a policy. |
+### 🏖️ Leave Policy
+
+**Question:**
+
+> How many casual leaves can I carry forward to next year?
+
+**Expected:**
+
+> Maximum **8 days**, with a citation to the relevant section.
 
 ---
 
-## 📤 Admin: Uploading New Policies
+### 🏥 Health Benefits
 
-You can add new company policies at any time without restarting the application!
+**Question:**
 
-### Via the Web Interface (Streamlit):
-1. Open the app (`http://localhost:8501`).
-2. Look at the left sidebar under **Admin: Upload Policy**.
-3. Drag and drop any Markdown (`.md`) or text (`.txt`) file (for example: `remote-work-office-policy.md`).
-4. Click **📥 Ingest & Index Document**.
-5. The policy is chunked, embedded, and immediately searchable!
+> Does the Standard health tier cover dental implants?
 
-### Via REST API:
+**Expected:**
+
+> No, dental implants are not covered under the Standard tier.
+
+---
+
+### 🔒 IT Security
+
+**Question:**
+
+> Can I send confidential company files to my personal Gmail?
+
+**Expected:**
+
+> No. Confidential and Restricted files must not be sent to personal email.
+
+---
+
+### 💻 Software Policy
+
+**Question:**
+
+> Can I install any browser extension I want?
+
+**Expected:**
+
+The assistant explains the company's software and browser-extension requirements and provides the relevant citation.
+
+---
+
+### ❌ Unsupported Question
+
+**Question:**
+
+> What is the company's maternity leave policy?
+
+**Expected:**
+
+If the uploaded policies do not contain maternity leave information, the assistant safely refuses instead of guessing.
+
+---
+
+### ❌ Random / Out-of-Scope Question
+
+**Question:**
+
+> Can I bring my pet iguana to the office?
+
+**Expected:**
+
+The assistant safely refuses because the available policies do not provide enough information.
+
+---
+
+# 📤 Admin: Uploading New Policies
+
+Administrators can add new policy documents directly from the web interface.
+
+### Steps
+
+1. Open the Streamlit application.
+2. Open the left sidebar.
+3. Find **Admin: Upload Policy**.
+4. Upload a `.md` or `.txt` file.
+5. Click **📥 Ingest & Index Document**.
+6. The document is processed and indexed.
+7. The new policy becomes searchable.
+
+Example:
+
+```text
+remote-work-office-policy.md
+```
+
+After uploading the document, employees can ask questions about the new policy.
+
+---
+
+## REST API Upload
+
+A policy can also be uploaded through the API:
+
 ```bash
 curl -X POST "http://127.0.0.1:8000/documents" \
   -F "file=@data/policies/remote-work-office-policy.md"
@@ -245,26 +700,28 @@ curl -X POST "http://127.0.0.1:8000/documents" \
 
 ---
 
-## 🛠️ REST API Usage (FastAPI)
+# 🛠️ REST API
 
-You can send standard JSON requests to the API:
+The FastAPI backend provides endpoints for interacting with the application.
 
-### Ask a Question (`POST /ask`):
+## Ask a Question
 
-#### PowerShell:
-```powershell
-$body = @{ question = "How many casual leave days can I carry forward?" } | ConvertTo-Json
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/ask" -Method Post -ContentType "application/json" -Body $body
+### Endpoint
+
+```http
+POST /ask
 ```
 
-#### cURL (Bash):
-```bash
-curl -X POST "http://127.0.0.1:8000/ask" \
-  -H "Content-Type: application/json" \
-  -d '{"question": "How many casual leave days can I carry forward?"}'
+### Request
+
+```json
+{
+  "question": "How many casual leave days can I carry forward?"
+}
 ```
 
-#### Sample Response:
+### Example Response
+
 ```json
 {
   "answer": "A maximum of 8 days of unused casual leave may be carried forward to the next calendar year.",
@@ -279,115 +736,225 @@ curl -X POST "http://127.0.0.1:8000/ask" \
 
 ---
 
-## 📂 Project Structure
+## Health Check
+
+```http
+GET /health
+```
+
+Used to check whether the backend is running correctly.
+
+---
+
+## API Documentation
+
+FastAPI automatically provides interactive API documentation:
 
 ```text
-hr-policy-assistant/
-│
-├── app/
-│   ├── config.py                 # Application settings & environment variables
-│   ├── main.py                   # FastAPI REST server & API routes (/ask, /documents)
-│   │
-│   ├── generation/               # LLM Generation & Guardrails
-│   │   ├── generator.py          # Communicates with Gemini API with retry logic
-│   │   ├── prompt.py             # System prompt construction with strict context rules
-│   │   └── citation_validator.py # Verifies LLM citations match actual retrieved chunks
-│   │
-│   ├── ingestion/                # Document Processing Pipeline
-│   │   ├── chunker.py            # Splits policies by Markdown headings and tables
-│   │   ├── indexer.py            # Generates embeddings and saves to ChromaDB
-│   │   └── loader.py             # Reads and validates .md and .txt files
-│   │
-│   ├── models/                   # Pydantic data validation schemas
-│   │   └── schemas.py            # Request and response models
-│   │
-│   ├── retrieval/                # Search & Grounding Engine
-│   │   ├── embeddings.py         # Local sentence-transformers wrapper
-│   │   ├── grounding.py          # Anti-hallucination gatekeeper
-│   │   ├── hybrid.py             # Hybrid search (Vector + Keyword via RRF)
-│   │   ├── keyword_search.py     # Tokenizer with morphological stemming
-│   │   └── vector_store.py       # ChromaDB vector store interface
-│   │
-│   └── services/                 # Service Layer
-│       ├── ingestion_service.py  # Coordinates document upload and indexing
-│       ├── qa_service.py         # Coordinates retrieve -> ground -> generate -> validate
-│       └── startup.py            # Auto-seeds sample policies on initial launch
-│
-├── chroma_db/                    # Local Chroma vector database storage
-├── data/policies/                # Storage directory for sample HR policies (.md)
-├── tests/                        # Automated unit and integration test suite
-│   ├── test_citation_validator.py
-│   ├── test_evaluation.py        # 8-question evaluation suite (retrieval & refusal)
-│   ├── test_grounding.py         # Grounding gatekeeper unit tests
-│   └── test_hybrid.py            # Hybrid search test script
-│
-├── .env.example                  # Template configuration file
-├── requirements.txt              # Pinned Python package dependencies
-├── streamlit_app.py              # Interactive Streamlit Web UI
-└── README.md                     # Documentation (You are here!)
+http://127.0.0.1:8000/docs
 ```
 
 ---
 
-## 🧪 Running Tests
+# 🧪 Running Tests
 
-To verify that all retrieval, grounding, and citation validation tests pass on your machine:
+The project contains tests for the major components of the RAG pipeline.
 
-#### 1. Test Citation Validator:
+## 1. Citation Validator
+
 ```bash
 python tests/test_citation_validator.py
 ```
-*(Validates that invented or fake citations are cleanly rejected.)*
 
-#### 2. Test Grounding Gatekeeper:
+Checks whether generated citations are supported by the retrieved content.
+
+---
+
+## 2. Grounding Test
+
 ```bash
 python tests/test_grounding.py
 ```
-*(Validates that strong matches pass and weak/fake questions are refused.)*
 
-#### 3. Test Full Evaluation Suite:
+Checks whether the system correctly identifies strong and weak evidence.
+
+---
+
+## 3. Evaluation Test
+
 ```bash
 python tests/test_evaluation.py
 ```
-*(Tests 8 standard questions and confirms 100% retrieval and refusal accuracy.)*
 
-#### 4. Test Comprehensive RAG Pipeline Regression Suite:
+Tests standard questions and refusal scenarios.
+
+---
+
+## 4. Full RAG Pipeline Test
+
 ```bash
 python tests/test_rag_pipeline.py
 ```
-*(Tests direct facts, paraphrases, markdown tables, citations, and strict refusals across 11 scenarios.)*
+
+Tests:
+
+* Direct factual questions
+* Rephrased questions
+* Markdown tables
+* Citation behavior
+* Unsupported questions
+* Safe refusals
 
 ---
 
-## ❓ Frequently Asked Questions (FAQ) & Troubleshooting
+# 🔐 Privacy and Security
 
-### Q1: I get `Execution of scripts is disabled on this system` in Windows PowerShell.
-**Solution:** PowerShell restricts running scripts by default. Run this command once in your terminal:
+The application is designed to reduce unnecessary exposure of company policy information.
+
+### Local Embeddings
+
+The `all-MiniLM-L6-v2` embedding model runs locally on the user's machine.
+
+### Retrieved Context
+
+When generating an answer, the application sends the relevant retrieved policy excerpts to Gemini rather than sending the entire policy collection.
+
+### API Key Protection
+
+API credentials are stored in environment variables through the `.env` file.
+
+> For production use with confidential company information, additional security, access control, encryption, logging, and AI-provider data-governance policies should be configured according to organizational requirements.
+
+---
+
+# ❓ FAQ & Troubleshooting
+
+## Q1. Do I need to run both Streamlit and FastAPI?
+
+**No.**
+
+For the normal web application, simply run:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+FastAPI is useful when you want to access the backend through REST APIs.
+
+---
+
+## Q2. PowerShell says "Execution of scripts is disabled"
+
+Run:
+
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
-Then run `.\venv\Scripts\Activate.ps1` again.
+
+Then activate the environment again:
+
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
 ---
 
-### Q2: I get `ModuleNotFoundError: No module named 'app'`.
-**Solution:** Python needs to know the project root directory. Always run commands from the `hr-policy-assistant` directory and ensure your virtual environment is active. You can also set:
-- **Windows (PowerShell):** `$env:PYTHONPATH="."`
-- **macOS / Linux:** `export PYTHONPATH="."`
+## Q3. I get `ModuleNotFoundError: No module named 'app'`
+
+Make sure you are running commands from the project root:
+
+```text
+hr-policy-assistant/
+```
+
+Also make sure the virtual environment is active.
 
 ---
 
-### Q3: How do I know if my Gemini API key is working?
-**Solution:** When you launch `streamlit run streamlit_app.py`, check the terminal log. If your key is invalid or missing, you will see a warning in the sidebar. You can test your key anytime for free at [Google AI Studio](https://aistudio.google.com/apikey).
+## Q4. How do I know if my Gemini API key is working?
+
+Start the Streamlit application:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+If the key is missing or invalid, the application will show a warning.
+
+You can manage your API key through Google AI Studio:
+
+https://aistudio.google.com/apikey
 
 ---
 
-### Q4: Are my company policies sent to third parties?
-**Solution:** 
-- **Embeddings:** 100% private. Converted into vectors locally on your CPU using `all-MiniLM-L6-v2`.
-- **Generation:** Only the top 5 small excerpts relevant to the specific question are sent over SSL to the Google Gemini API to format the answer.
+## Q5. Can I upload new policies?
+
+Yes.
+
+Upload `.md` or `.txt` files from the **Admin: Upload Policy** section in the Streamlit sidebar.
 
 ---
 
-## 📄 License
-This project is licensed under the MIT License — feel free to use and adapt it for your team or organization!
+## Q6. What happens when the answer is not in the policies?
+
+The system performs a grounding check.
+
+If sufficient evidence cannot be found, it refuses to answer rather than generating an unsupported response.
+
+---
+
+# 🎯 Project Highlights
+
+This project demonstrates practical experience with:
+
+* **Retrieval-Augmented Generation (RAG)**
+* **Hybrid Search**
+* **Vector Databases**
+* **Semantic Search**
+* **Keyword Search**
+* **Reciprocal Rank Fusion (RRF)**
+* **LLM Integration**
+* **Prompt Engineering**
+* **Grounding / Hallucination Prevention**
+* **Citation Validation**
+* **Document Ingestion**
+* **FastAPI**
+* **Streamlit**
+* **Python**
+* **REST APIs**
+* **Automated Testing**
+* **Environment Configuration**
+
+---
+
+# 📌 Key Design Decisions
+
+### Why Hybrid Search?
+
+Vector search is good at understanding meaning, while keyword search is useful for exact policy terms, section names, and specific clauses.
+
+Combining both provides more reliable retrieval.
+
+### Why Grounding?
+
+Even a good search result may not contain enough information to answer a question.
+
+The grounding layer acts as a safety check before the LLM is called.
+
+### Why Citation Validation?
+
+The assistant should not only provide an answer but also show where the information came from.
+
+Citation validation helps ensure that generated citations correspond to the retrieved policy content.
+
+### Why Local Embeddings?
+
+The embedding model can run locally, reducing dependency on an external embedding API and avoiding the need to send the entire policy collection to an external service for embedding.
+
+---
+
+# 📄 License
+
+This project is licensed under the **MIT License**.
+
+Feel free to use, modify, and adapt this project for your own applications or organization.
