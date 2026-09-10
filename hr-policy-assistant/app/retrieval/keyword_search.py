@@ -18,7 +18,10 @@ STOPWORDS = {
     "through", "to", "too", "under", "until", "up", "very", "was", "we",
     "were", "what", "when", "where", "which", "while", "who", "whom",
     "why", "with", "would", "you", "your", "yours", "yourself",
-    "yourselves"
+    "yourselves",
+    # Question quantifiers, auxiliary query verbs, and document meta terms
+    "many", "much", "tell", "give", "take", "get", "provide", "provides",
+    "policy", "policies", "s"
 }
 
 
@@ -36,13 +39,35 @@ def stem_token(token: str) -> str:
     if "." in token or token.isdigit():
         return token
 
-    for suffix in ("ing", "ies", "es", "ed", "s"):
-        if token.endswith(suffix) and len(token) - len(suffix) >= 3:
-            if suffix == "ies":
-                return token[:-3] + "y"
-            elif suffix == "es" and token.endswith(("shes", "ches", "sses", "xes")):
-                return token[:-2]
-            return token[:-len(suffix)]
+    # Adverb/adjective suffixes (annually -> annual, yearly -> year)
+    if token.endswith("ally") and len(token) >= 7:
+        return token[:-4]
+    if token.endswith("ly") and len(token) >= 5:
+        return token[:-2]
+
+    # Plural 'ies' -> 'y' (e.g., policies -> policy, entries -> entry)
+    if token.endswith("ies") and len(token) >= 5:
+        return token[:-3] + "y"
+
+    # Sibilant 'es' plurals (e.g., boxes -> box, watches -> watch)
+    if token.endswith(("shes", "ches", "sses", "xes")) and len(token) >= 5:
+        return token[:-2]
+
+    # Standard English plurals: strip trailing 's' while preserving root 'e'
+    # leaves -> leave, employees -> employee, days -> day, rules -> rule, allowances -> allowance
+    if token.endswith("s") and not token.endswith("ss") and len(token) >= 3:
+        return token[:-1]
+
+    # Participles and past tense
+    if token.endswith("ing") and len(token) >= 6:
+        if token.endswith("ying"):
+            return token[:-4] + "y"
+        return token[:-3]
+
+    if token.endswith("ed") and len(token) >= 5:
+        if token.endswith("ied"):
+            return token[:-3] + "y"
+        return token[:-2]
 
     return token
 

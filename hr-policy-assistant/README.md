@@ -351,6 +351,12 @@ python tests/test_evaluation.py
 ```
 *(Tests 8 standard questions and confirms 100% retrieval and refusal accuracy.)*
 
+#### 4. Test Comprehensive RAG Pipeline Regression Suite:
+```bash
+python tests/test_rag_pipeline.py
+```
+*(Tests direct facts, paraphrases, markdown tables, citations, and strict refusals across 11 scenarios.)*
+
 ---
 
 ## ❓ Frequently Asked Questions (FAQ) & Troubleshooting

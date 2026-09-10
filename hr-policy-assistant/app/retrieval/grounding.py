@@ -21,13 +21,13 @@ class GroundingChecker:
     """
 
     # Lower Chroma distance = better semantic similarity.
-    STRONG_DISTANCE_THRESHOLD = 0.25
+    STRONG_DISTANCE_THRESHOLD = 0.28
 
     # Hybrid retrieval score.
     MIN_RRF_SCORE = 0.015
 
-    # Keyword overlap score.
-    MIN_KEYWORD_SCORE = 0.50
+    # Keyword overlap score (tuned to distinguish strong policy evidence from incidental overlap).
+    MIN_KEYWORD_SCORE = 0.52
 
     def check(self, results: list[Any]) -> GroundingDecision:
         """

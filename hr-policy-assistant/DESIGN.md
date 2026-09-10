@@ -171,9 +171,9 @@ Before invoking Gemini, retrieved candidates are audited against calibrated evid
 
 1. **Rule 1 (Exact Section Match):** Grounded if a chunk's section heading explicitly matches the query's requested section number.
 2. **Rule 2 (Strong Semantic Similarity):** Grounded if top result vector distance satisfies:
-   $$\text{distance} \le 0.35 \quad \text{and} \quad \text{RRF score} \ge 0.015$$
+   $$\text{distance} \le 0.28 \quad \text{and} \quad \text{RRF score} \ge 0.015$$
 3. **Rule 3 (Semantic + Keyword Agreement):** Grounded if:
-   $$\text{distance} \le 0.70 \quad \text{and} \quad \text{keyword overlap} \ge 0.50 \quad \text{and} \quad \text{RRF score} \ge 0.015$$
+   $$\text{distance} \le 0.70 \quad \text{and} \quad \text{keyword overlap} \ge 0.52 \quad \text{and} \quad \text{RRF score} \ge 0.015$$
 4. **Otherwise:** Immediate refusal. The LLM is never called, saving latency and quota.
 
 ### Gate 2: LLM System Contract (`PolicyGenerator`)

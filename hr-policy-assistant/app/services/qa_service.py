@@ -69,22 +69,14 @@ class QAService:
 
         k = top_k if top_k is not None else settings.top_k
 
-        # Retrieve documents (support both retrieve and search API)
-        if hasattr(self.retriever, "retrieve"):
-            results = self.retriever.retrieve(
-                question,
-                top_k=k
-            )
-        elif hasattr(self.retriever, "search"):
-            results = self.retriever.search(
-                question,
-                top_k=k
-            )
-        else:
+        # Retrieve documents
+        retrieve_fn = getattr(self.retriever, "retrieve", getattr(self.retriever, "search", None))
+        if retrieve_fn is None:
             raise RuntimeError(
                 "Retriever must implement 'retrieve' or 'search'."
             )
 
+        results = retrieve_fn(question, top_k=k)
         if results is None:
             results = []
 
@@ -134,16 +126,10 @@ class QAService:
 
         # Generate answer
         try:
-            try:
-                generated = generator.generate(
-                    query=question,
-                    chunks=results,
-                )
-            except TypeError:
-                generated = generator.generate(
-                    question,
-                    results,
-                )
+            generated = generator.generate(
+                query=question,
+                chunks=results,
+            )
         except Exception:
             return {
                 "answer": self.REFUSAL_MESSAGE,
@@ -176,18 +162,32 @@ class QAService:
         )
 
         if not citations:
+            if raw_answer and any(
+                phrase in raw_answer.lower()
+                for phrase in [
+                    "temporarily unavailable",
+                    "request limit",
+                    "error",
+                    "unable to generate an answer",
+                ]
+            ):
+                return {
+                    "answer": raw_answer,
+                    "citations": [],
+                }
             return {
                 "answer": self.REFUSAL_MESSAGE,
                 "citations": [],
             }
 
         lower_answer = raw_answer.lower()
-        if (
-            "don't have enough information" in lower_answer
-            or "do not have enough information" in lower_answer
-            or "contact hr" in lower_answer
-            or "not enough information" in lower_answer
-        ):
+        refusal_phrases = (
+            "don't have enough information",
+            "do not have enough information",
+            "contact hr",
+            "not enough information",
+        )
+        if any(phrase in lower_answer for phrase in refusal_phrases):
             return {
                 "answer": self.REFUSAL_MESSAGE,
                 "citations": [],

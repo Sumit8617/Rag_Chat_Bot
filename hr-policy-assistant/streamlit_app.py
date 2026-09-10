@@ -95,17 +95,9 @@ def ensure_sample_policies_seeded():
     try:
         from app.services.startup import seed_sample_policies_if_empty
         return seed_sample_policies_if_empty()
-    except TypeError:
-        try:
-            from app.retrieval.embeddings import EmbeddingService
-            from app.services.startup import seed_sample_policies_if_empty
-            embedding_service = EmbeddingService()
-            return seed_sample_policies_if_empty(embedding_service=embedding_service)
-        except Exception as exc:
-            logger.warning("Startup policy seeding skipped: %s", exc)
     except Exception as exc:
         logger.warning("Startup policy seeding skipped: %s", exc)
-    return None
+        return None
 
 
 # Initialize sample policies
@@ -475,6 +467,80 @@ with st.sidebar:
             st.button("📥 Export", disabled=True, use_container_width=True)
 
 
+def render_assistant_metadata(
+    citations: list[dict],
+    grounded: bool,
+    content: str,
+    results: list[dict],
+    latency: float | None = None,
+):
+    """Render grounding badges, citation pills, evidence expander, and response metadata."""
+    if citations and grounded:
+        st.markdown(
+            f'<div class="badge-grounded">✓ Verified Grounded ({len(citations)} source{"s" if len(citations) > 1 else ""})</div>',
+            unsafe_allow_html=True,
+        )
+    elif not grounded or content == REFUSAL_MESSAGE:
+        st.markdown(
+            '<div class="badge-refused">⚠ Policy Refusal — Out of Scope or Insufficient Evidence</div>',
+            unsafe_allow_html=True,
+        )
+
+    if citations:
+        pills_html = ['<div class="citation-container">']
+        for cit in citations:
+            doc = cit.get("document", "Unknown")
+            sec = cit.get("section", "Section")
+            pills_html.append(
+                f'<div class="citation-pill">📄 <span class="doc-name">{doc}</span> <span class="sec-name">→ {sec}</span></div>'
+            )
+        pills_html.append("</div>")
+        st.markdown("".join(pills_html), unsafe_allow_html=True)
+
+    if results:
+        with st.expander(
+            f"🔍 Inspect Retrieved Evidence ({len(results)} Chunks Analyzed)",
+            expanded=False,
+        ):
+            for i, chunk in enumerate(results, start=1):
+                doc = chunk.get("document", "Unknown")
+                sec = chunk.get("metadata", {}).get("section", chunk.get("section", "General"))
+                score = chunk.get("rrf_score") or chunk.get("fused_score")
+                dist = chunk.get("distance")
+                text_snippet = chunk.get("text", "")
+
+                score_desc = []
+                if score is not None:
+                    score_desc.append(f"RRF Score: <strong>{score:.4f}</strong>")
+                if dist is not None:
+                    score_desc.append(f"Vector Distance: <strong>{dist:.4f}</strong>")
+
+                score_str = " • ".join(score_desc) if score_desc else ""
+
+                st.markdown(
+                    f"""
+                    <div class="evidence-card">
+                        <div class="evidence-header">
+                            <span><strong>#{i}</strong> 📄 <code>{doc}</code> &gt; <code>{sec}</code></span>
+                            <span>{score_str}</span>
+                        </div>
+                        <div class="evidence-text">{text_snippet}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    meta_items = []
+    if latency is not None:
+        meta_items.append(f"⚡ {latency:.2f}s")
+    meta_items.append("🔍 Hybrid RRF Search")
+    meta_items.append(f"🤖 {settings.gemini_model}")
+    st.markdown(
+        f'<div class="response-meta">{" • ".join(meta_items)}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 # ============================================================
 # Display Chat Messages
 # ============================================================
@@ -492,73 +558,12 @@ for idx, msg in enumerate(st.session_state.messages):
         st.markdown(content)
 
         if role == "assistant":
-            # Grounding Status Badge
-            if citations and grounded:
-                st.markdown(
-                    f'<div class="badge-grounded">✓ Verified Grounded ({len(citations)} source{"s" if len(citations) > 1 else ""})</div>',
-                    unsafe_allow_html=True,
-                )
-            elif not grounded or content == REFUSAL_MESSAGE:
-                st.markdown(
-                    f'<div class="badge-refused">⚠ Policy Refusal — Out of Scope or Insufficient Evidence</div>',
-                    unsafe_allow_html=True,
-                )
-
-            # Citations Pills
-            if citations:
-                pills_html = ['<div class="citation-container">']
-                for cit in citations:
-                    doc = cit.get("document", "Unknown")
-                    sec = cit.get("section", "Section")
-                    pills_html.append(
-                        f'<div class="citation-pill">📄 <span class="doc-name">{doc}</span> <span class="sec-name">→ {sec}</span></div>'
-                    )
-                pills_html.append('</div>')
-                st.markdown("".join(pills_html), unsafe_allow_html=True)
-
-            # Transparency / Evidence Inspection Expander
-            if results:
-                with st.expander(
-                    f"🔍 Inspect Retrieved Evidence ({len(results)} Chunks Analyzed)",
-                    expanded=False,
-                ):
-                    for i, chunk in enumerate(results, start=1):
-                        doc = chunk.get("document", "Unknown")
-                        sec = chunk.get("metadata", {}).get("section", chunk.get("section", "General"))
-                        fused_score = chunk.get("fused_score")
-                        dist = chunk.get("distance")
-                        text_snippet = chunk.get("text", "")
-
-                        score_desc = []
-                        if fused_score is not None:
-                            score_desc.append(f"RRF Score: <strong>{fused_score:.4f}</strong>")
-                        if dist is not None:
-                            score_desc.append(f"Vector Distance: <strong>{dist:.4f}</strong>")
-
-                        score_str = " • ".join(score_desc) if score_desc else ""
-
-                        st.markdown(
-                            f"""
-                            <div class="evidence-card">
-                                <div class="evidence-header">
-                                    <span><strong>#{i}</strong> 📄 <code>{doc}</code> &gt; <code>{sec}</code></span>
-                                    <span>{score_str}</span>
-                                </div>
-                                <div class="evidence-text">{text_snippet}</div>
-                            </div>
-                            """,
-                            unsafe_allow_html=True,
-                        )
-
-            # Latency and Engine Info
-            meta_items = []
-            if latency is not None:
-                meta_items.append(f"⚡ {latency:.2f}s")
-            meta_items.append("🔍 Hybrid RRF Search")
-            meta_items.append(f"🤖 {settings.gemini_model}")
-            st.markdown(
-                f'<div class="response-meta">{" • ".join(meta_items)}</div>',
-                unsafe_allow_html=True,
+            render_assistant_metadata(
+                citations=citations,
+                grounded=grounded,
+                content=content,
+                results=results,
+                latency=latency,
             )
 
 
@@ -624,69 +629,12 @@ if prompt_to_run:
         # Render current assistant response
         st.markdown(answer)
 
-        # Grounding Badge
-        if citations and grounded:
-            st.markdown(
-                f'<div class="badge-grounded">✓ Verified Grounded ({len(citations)} source{"s" if len(citations) > 1 else ""})</div>',
-                unsafe_allow_html=True,
-            )
-        elif not grounded or answer == REFUSAL_MESSAGE:
-            st.markdown(
-                f'<div class="badge-refused">⚠ Policy Refusal — Out of Scope or Insufficient Evidence</div>',
-                unsafe_allow_html=True,
-            )
-
-        # Citations Pills
-        if citations:
-            pills_html = ['<div class="citation-container">']
-            for cit in citations:
-                doc = cit.get("document", "Unknown")
-                sec = cit.get("section", "Section")
-                pills_html.append(
-                    f'<div class="citation-pill">📄 <span class="doc-name">{doc}</span> <span class="sec-name">→ {sec}</span></div>'
-                )
-            pills_html.append('</div>')
-            st.markdown("".join(pills_html), unsafe_allow_html=True)
-
-        # Transparency / Evidence Inspection Expander
-        if results:
-            with st.expander(
-                f"🔍 Inspect Retrieved Evidence ({len(results)} Chunks Analyzed)",
-                expanded=False,
-            ):
-                for i, chunk in enumerate(results, start=1):
-                    doc = chunk.get("document", "Unknown")
-                    sec = chunk.get("metadata", {}).get("section", chunk.get("section", "General"))
-                    fused_score = chunk.get("fused_score")
-                    dist = chunk.get("distance")
-                    text_snippet = chunk.get("text", "")
-
-                    score_desc = []
-                    if fused_score is not None:
-                        score_desc.append(f"RRF Score: <strong>{fused_score:.4f}</strong>")
-                    if dist is not None:
-                        score_desc.append(f"Vector Distance: <strong>{dist:.4f}</strong>")
-
-                    score_str = " • ".join(score_desc) if score_desc else ""
-
-                    st.markdown(
-                        f"""
-                        <div class="evidence-card">
-                            <div class="evidence-header">
-                                <span><strong>#{i}</strong> 📄 <code>{doc}</code> &gt; <code>{sec}</code></span>
-                                <span>{score_str}</span>
-                            </div>
-                            <div class="evidence-text">{text_snippet}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-
-        # Latency and Engine Info
-        meta_items = [f"⚡ {latency:.2f}s", "🔍 Hybrid RRF Search", f"🤖 {settings.gemini_model}"]
-        st.markdown(
-            f'<div class="response-meta">{" • ".join(meta_items)}</div>',
-            unsafe_allow_html=True,
+        render_assistant_metadata(
+            citations=citations,
+            grounded=grounded,
+            content=answer,
+            results=results,
+            latency=latency,
         )
 
         # Save assistant message in session state

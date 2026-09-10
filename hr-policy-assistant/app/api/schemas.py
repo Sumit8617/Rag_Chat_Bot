@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field
-
-from app.models.schemas import Citation
+from app.models.schemas import Citation, AnswerResponse
 
 
 class AskRequest(BaseModel):
@@ -11,9 +10,8 @@ class AskRequest(BaseModel):
     )
 
 
-class AskResponse(BaseModel):
-    answer: str
-    citations: list[Citation]
+# AskResponse is canonical AnswerResponse model
+AskResponse = AnswerResponse
 
 
 class UploadResponse(BaseModel):

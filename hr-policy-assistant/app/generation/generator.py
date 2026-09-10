@@ -90,6 +90,9 @@ class PolicyGenerator:
                     or "connection" in err_lower
                     or "reset" in err_lower
                     or "timeout" in err_lower
+                    # Empty/blocked response from Gemini — may succeed on retry
+                    or "model output" in err_lower
+                    or "output text" in err_lower
                 )
 
                 # If not retryable, stop immediately
@@ -139,12 +142,35 @@ class PolicyGenerator:
 
 
         # Get response text safely
+        # response.text raises if candidates are empty or blocked.
 
         try:
 
             text = response.text
 
-        except Exception:
+        except Exception as exc:
+
+            # Inspect finish reason for a useful message
+            finish_reason = "UNKNOWN"
+            try:
+                if response.candidates:
+                    finish_reason = str(
+                        response.candidates[0].finish_reason
+                    )
+            except Exception:
+                pass
+
+            print(
+                f"response.text error (finish_reason={finish_reason}): "
+                f"{exc}"
+            )
+
+            if finish_reason in ("SAFETY", "2"):
+                return self._error_response(
+                    "The AI service could not answer this question "
+                    "due to content safety filters. "
+                    "Please rephrase your query."
+                )
 
             text = None
 

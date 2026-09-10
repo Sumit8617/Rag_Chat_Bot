@@ -19,10 +19,14 @@ class IngestionService:
     def ingest_upload(self, filename: str, file_bytes: bytes) -> dict:
         
 
-        if not filename:
+        if not filename or not filename.strip():
             raise ValueError("Uploaded file has no filename.")
 
-        suffix = Path(filename).suffix.lower()
+        safe_filename = Path(filename).name
+        if not safe_filename or safe_filename.startswith("."):
+            raise ValueError("Invalid filename.")
+
+        suffix = Path(safe_filename).suffix.lower()
 
         if suffix not in SUPPORTED_EXTENSIONS:
             raise ValueError(
@@ -33,14 +37,14 @@ class IngestionService:
         if not file_bytes:
             raise ValueError("Uploaded file is empty.")
 
-        destination = UPLOAD_DIR / filename
+        destination = UPLOAD_DIR / safe_filename
         destination.write_bytes(file_bytes)
 
         text = load_document(str(destination))
 
         chunks = chunk_document(
             text=text,
-            document_name=filename
+            document_name=safe_filename
         )
 
         if not chunks:
@@ -51,6 +55,6 @@ class IngestionService:
         indexed_count = self.indexer.index_chunks(chunks)
 
         return {
-            "document": filename,
+            "document": safe_filename,
             "chunks_indexed": indexed_count
         }

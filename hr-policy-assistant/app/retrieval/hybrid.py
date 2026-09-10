@@ -11,6 +11,31 @@ SECTION_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+ABBREVIATION_EXPANSIONS = [
+    (re.compile(r"\bCL\b", re.IGNORECASE), "casual leave"),
+    (re.compile(r"\bSL\b", re.IGNORECASE), "sick leave"),
+    (re.compile(r"\bPL\b", re.IGNORECASE), "privilege leave"),
+    (re.compile(r"\bPTO\b", re.IGNORECASE), "privilege leave"),
+    (re.compile(r"\bLTA\b", re.IGNORECASE), "leave travel allowance"),
+    (re.compile(r"\bhealth\s+insurance\b", re.IGNORECASE), "health coverage"),
+    (re.compile(r"\bmedical\s+insurance\b", re.IGNORECASE), "health coverage"),
+    (re.compile(r"\bnon-sso\b", re.IGNORECASE), "without SSO"),
+    (re.compile(r"\bnon\s+sso\b", re.IGNORECASE), "without SSO"),
+    (re.compile(r"\bWFH\b", re.IGNORECASE), "work from home"),
+]
+
+
+def expand_query(query: str) -> str:
+    """
+    Expand standard HR policy abbreviations into full phrases
+    so both semantic vector search and keyword lexical search
+    reliably match policy documentation.
+    """
+    expanded = query
+    for pattern, replacement in ABBREVIATION_EXPANSIONS:
+        expanded = pattern.sub(replacement, expanded)
+    return expanded
+
 
 class HybridRetriever:
     """
@@ -53,7 +78,7 @@ class HybridRetriever:
         if not query or not query.strip():
             return []
 
-        query = query.strip()
+        query = expand_query(query.strip())
 
         top_k = top_k or settings.top_k
 

@@ -124,7 +124,7 @@ def test_is_grounded_helper():
         FakeResult(
             distance=0.30,
             rrf_score=0.016,
-            keyword_score=0.50,
+            keyword_score=0.60,
             exact_section=False
         )
     ]
