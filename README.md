@@ -43,7 +43,6 @@ The demo shows:
 * [Admin: Uploading New Policies](#-admin-uploading-new-policies)
 * [REST API](#-rest-api)
 * [Running Tests](#-running-tests)
-* [Privacy and Security](#-privacy-and-security)
 * [FAQ & Troubleshooting](#-faq--troubleshooting)
 * [License](#-license)
 
@@ -451,7 +450,7 @@ You will also need a **Google Gemini API key**.
 Clone the repository:
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/Sumit8617/Rag_Chat_Bot.git
 cd hr-policy-assistant
 ```
 
@@ -804,26 +803,6 @@ Tests:
 * Citation behavior
 * Unsupported questions
 * Safe refusals
-
----
-
-# 🔐 Privacy and Security
-
-The application is designed to reduce unnecessary exposure of company policy information.
-
-### Local Embeddings
-
-The `all-MiniLM-L6-v2` embedding model runs locally on the user's machine.
-
-### Retrieved Context
-
-When generating an answer, the application sends the relevant retrieved policy excerpts to Gemini rather than sending the entire policy collection.
-
-### API Key Protection
-
-API credentials are stored in environment variables through the `.env` file.
-
-> For production use with confidential company information, additional security, access control, encryption, logging, and AI-provider data-governance policies should be configured according to organizational requirements.
 
 ---
 
